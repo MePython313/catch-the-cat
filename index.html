@@ -90,22 +90,27 @@
         highscoreDisplay.innerText = highscore;
 
         // Scratch Block: "When green flag clicked" / Initial Setup
+        // Load the audio into memory first
+        let bgm = new Audio('your_song.mp3'); // EXACT filename required (case-sensitive)
+        bgm.loop = true;
+
         function startGame() {
             startBtn.style.display = "none";
-            
-            let bgm = new Audio('song.mp3'); bgm.loop = true; bgm.play();
-            
-            // Scratch Block: set Score to 0
-            score = 0;
-            scoreDisplay.innerText = score;
-            
-            // Scratch Block: set Game to On
-            gameState = "On";
-            cat.style.display = "block";
-            
-            // Start the movement loop (equivalent to your 'repeat' loops under 'when I receive aya')
-            catMovementLoop(1500); // Starts with 1.5 seconds wait
-        }
+    
+    // Play the music and log any errors
+            bgm.play().catch(function(error) {
+                console.log("Audio failed to play:", error);
+                alert("Audio error! Check the console (F12) for details.");
+            });
+    
+        score = 0;
+        scoreDisplay.innerText = score;
+    
+        gameState = "On";
+        cat.style.display = "block";
+        
+        catMovementLoop(1500); 
+}
 
         // Scratch Block: "When this sprite clicked"
         function catClicked() {
