@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catch the Cat</title>
+    <style>
+        /* This acts like your Scratch Stage */
+        body {
+            margin: 0;
+            background-color: #9966FF; /* Matching the purple backdrop from your screenshot */
+            font-family: sans-serif;
+            overflow: hidden; /* Prevents scrollbars when the cat moves to the edge */
+        }
+
+        #game-area {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* The Scoreboard */
+        #ui {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 20px;
+            border: 2px solid #FFA500;
+        }
+
+        /* The Cat Sprite */
+        #cat {
+            position: absolute;
+            width: 100px; /* Adjust based on your 'set size to 100%' block */
+            cursor: pointer;
+            display: none; /* Starts hidden until game starts */
+            transition: transform 0.1s;
+        }
+
+        #cat:active {
+            transform: scale(0.9); /* Small visual feedback when clicked */
+        }
+
+        /* Start Button */
+        #start-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
+            font-size: 24px;
+            cursor: pointer;
+            border-radius: 30px;
+            border: none;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-area">
+        <button id="start-btn" onclick="startGame()">Start Game</button>
+        <div id="ui">
+            Score: <span id="scoreDisplay">0</span><br>
+            Highscore: <span id="highscoreDisplay">0</span>
+        </div>
+        
+        <!-- Replace 'cat.png' with your actual image file name -->
+        <img id="cat" src="cat.png" alt="Cat Sprite" onclick="catClicked()">
+    </div>
+
+    <script>
+        // Scratch Variables
+        let score = 0;
+        let highscore = localStorage.getItem("highscore") || 0; // Saves highscore to browser
+        let gameState = "Off"; // Matches your 'set Game to Off'
+        let currentTimeout = null;
+
+        // HTML Elements (Connecting JS to the Screen)
+        const cat = document.getElementById("cat");
+        const scoreDisplay = document.getElementById("scoreDisplay");
+        const highscoreDisplay = document.getElementById("highscoreDisplay");
+        const startBtn = document.getElementById("start-btn");
+
+        highscoreDisplay.innerText = highscore;
+
+        // Scratch Block: "When green flag clicked" / Initial Setup
+        function startGame() {
+            startBtn.style.display = "none";
+            
+            // Scratch Block: set Score to 0
+            score = 0;
+            scoreDisplay.innerText = score;
+            
+            // Scratch Block: set Game to On
+            gameState = "On";
+            cat.style.display = "block";
+            
+            // Start the movement loop (equivalent to your 'repeat' loops under 'when I receive aya')
+            catMovementLoop(1500); // Starts with 1.5 seconds wait
+        }
+
+        // Scratch Block: "When this sprite clicked"
+        function catClicked() {
+            if (gameState === "On") {
+                // Scratch Block: change Score by 1
+                score += 1;
+                scoreDisplay.innerText = score;
+
+                // Scratch Block: if Score > highscore then set highscore to Score
+                if (score > highscore) {
+                    highscore = score;
+                    highscoreDisplay.innerText = highscore;
+                    localStorage.setItem("highscore", highscore); // Saves locally (like Cloud Variables)
+                }
+
+                // Immediately hide and move it (optional, makes it feel responsive)
+                cat.style.display = "none";
+            }
+        }
+
+        // Scratch Blocks: The massive 'repeat' stacks moving to random positions
+        function catMovementLoop(waitTime) {
+            if (gameState !== "On") return;
+
+            // Scratch Block: hide
+            cat.style.display = "none";
+
+            // Scratch Block: wait 5.5 seconds (shortened here for gameplay flow, adjust as needed)
+            setTimeout(() => {
+                if (gameState !== "On") return;
+
+                // Scratch Block: go to random position
+                // We use Math.random() to pick a random percentage for X and Y
+                const randomX = Math.floor(Math.random() * 85); // 0 to 85% width
+                const randomY = Math.floor(Math.random() * 85); // 0 to 85% height
+                
+                cat.style.left = randomX + "vw";
+                cat.style.top = randomY + "vh";
+
+                // Scratch Block: show
+                cat.style.display = "block";
+
+                // Scratch Block: wait [waitTime] seconds, then repeat with a slightly faster time
+                // This mimics your blocks where wait goes 1.5 -> 1.4 -> 1.3
+                let nextWaitTime = waitTime - 100; // Decreases by 0.1s
+                if (nextWaitTime < 500) nextWaitTime = 500; // Cap the max speed at 0.5s
+
+                currentTimeout = setTimeout(() => {
+                    catMovementLoop(nextWaitTime);
+                }, waitTime);
+
+            }, 1000); // Time it stays hidden before jumping
+        }
+    </script>
+</body>
+</html>
