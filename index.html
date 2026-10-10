@@ -5,12 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catch the Cat</title>
     <style>
-        /* This acts like your Scratch Stage */
         body {
             margin: 0;
-            background-color: #9966FF; /* Matching the purple backdrop from your screenshot */
+            background-color: #9966FF; 
             font-family: sans-serif;
-            overflow: hidden; /* Prevents scrollbars when the cat moves to the edge */
+            overflow: hidden;
         }
 
         #game-area {
@@ -19,150 +18,184 @@
             position: relative;
         }
 
-        /* The Scoreboard */
+        /* Top HUD / UI */
         #ui {
             position: absolute;
             top: 10px;
+            left: 10px;
             right: 10px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        .hud-box {
             background: white;
-            padding: 10px 20px;
-            border-radius: 20px;
+            padding: 5px 15px;
+            border-radius: 10px;
             font-weight: bold;
-            font-size: 20px;
+            font-size: 16px;
             border: 2px solid #FFA500;
         }
 
         /* The Cat Sprite */
         #cat {
             position: absolute;
-            width: 100px; /* Adjust based on your 'set size to 100%' block */
+            width: 100px;
             cursor: pointer;
-            display: none; /* Starts hidden until game starts */
-            transition: transform 0.1s;
+            display: none;
         }
 
-        #cat:active {
-            transform: scale(0.9); /* Small visual feedback when clicked */
-        }
-
-        /* Start Button */
-        #start-btn {
+        /* Start Screen / Menu Overlay */
+        #menu-screen {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 15px 30px;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #9966FF;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .menu-btn {
+            padding: 15px 40px;
             font-size: 24px;
             cursor: pointer;
             border-radius: 30px;
             border: none;
             background: white;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            font-weight: bold;
+            margin: 10px;
         }
     </style>
 </head>
 <body>
 
     <div id="game-area">
-        <button id="start-btn" onclick="startGame()">Start Game</button>
+        <!-- Start Menus matching your video -->
+        <div id="menu-screen">
+            <button class="menu-btn" id="main-start-btn" onclick="showDeviceMenu()">Start</button>
+            <div id="device-menu" style="display: none;">
+                <button class="menu-btn" onclick="startGame('mobile')">Mobile</button>
+                <button class="menu-btn" onclick="startGame('tab')">Tab</button>
+                <button class="menu-btn" onclick="startGame('pc')">PC</button>
+            </div>
+        </div>
+
+        <!-- In-game HUD -->
         <div id="ui">
-            Score: <span id="scoreDisplay">0</span><br>
-            Highscore: <span id="highscoreDisplay">0</span>
+            <div class="hud-box">Cat: Score: <span id="scoreDisplay">0</span></div>
+            <div class="hud-box">highscore: <span id="highscoreDisplay">0</span></div>
+            <div class="hud-box">timer: <span id="timerDisplay">0</span></div>
         </div>
         
-        <!-- Replace 'cat.png' with your actual image file name -->
+        <!-- Updated to point to cat.svg as shown in your files -->
         <img id="cat" src="cat.svg" alt="Cat Sprite" onclick="catClicked()">
     </div>
 
     <script>
-        // Scratch Variables
         let score = 0;
-        let highscore = localStorage.getItem("highscore") || 0; // Saves highscore to browser
-        let gameState = "Off"; // Matches your 'set Game to Off'
-        let currentTimeout = null;
+        let highscore = localStorage.getItem("highscore") || 7; // Default from your video
+        let gameState = "Off";
+        let timer = 0;
+        let timerInterval = null;
 
-        // HTML Elements (Connecting JS to the Screen)
         const cat = document.getElementById("cat");
         const scoreDisplay = document.getElementById("scoreDisplay");
         const highscoreDisplay = document.getElementById("highscoreDisplay");
-        const startBtn = document.getElementById("start-btn");
+        const timerDisplay = document.getElementById("timerDisplay");
+        const menuScreen = document.getElementById("menu-screen");
+        const mainStartBtn = document.getElementById("main-start-btn");
+        const deviceMenu = document.getElementById("device-menu");
 
         highscoreDisplay.innerText = highscore;
 
-        // Scratch Block: "When green flag clicked" / Initial Setup
-        // Load the audio into memory first
-        let bgm = new Audio('your_song.mp3'); // EXACT filename required (case-sensitive)
-        bgm.loop = true;
+        // Step 1: Click initial start button, show device selection
+        function showDeviceMenu() {
+            mainStartBtn.style.display = "none";
+            deviceMenu.style.display = "block";
+        }
 
-        function startGame() {
-            startBtn.style.display = "none";
-    
-    // Play the music and log any errors
-            bgm.play().catch(function(error) {
-                console.log("Audio failed to play:", error);
-                alert("Audio error! Check the console (F12) for details.");
-            });
-    
-        score = 0;
-        scoreDisplay.innerText = score;
-    
-        gameState = "On";
-        cat.style.display = "block";
-        
-        catMovementLoop(1500); 
-}
+        // Step 2: Choose device, set size, launch game & music
+        function startGame(deviceType) {
+            menuScreen.style.display = "none";
 
-        // Scratch Block: "When this sprite clicked"
+            // Set size based on device button chosen
+            if (deviceType === 'mobile') {
+                cat.style.width = "60px";
+            } else if (deviceType === 'tab') {
+                cat.style.width = "80px";
+            } else {
+                cat.style.width = "100px"; // PC size
+            }
+
+            // Play background music safely on loop
+            let bgm = new Audio('song.mp3');
+            bgm.loop = true;
+            bgm.play().catch(err => console.log("Audio play blocked/failed:", err));
+
+            // Reset game variables
+            score = 0;
+            scoreDisplay.innerText = score;
+            timer = 0;
+            
+            // Start Timer counting up
+            timerInterval = setInterval(() => {
+                timer++;
+                timerDisplay.innerText = timer;
+            }, 1000);
+
+            gameState = "On";
+            cat.style.display = "block";
+            
+            catMovementLoop(1500);
+        }
+
+        // Click on the Cat
         function catClicked() {
             if (gameState === "On") {
-                // Scratch Block: change Score by 1
                 score += 1;
                 scoreDisplay.innerText = score;
 
-                // Scratch Block: if Score > highscore then set highscore to Score
                 if (score > highscore) {
                     highscore = score;
                     highscoreDisplay.innerText = highscore;
-                    localStorage.setItem("highscore", highscore); // Saves locally (like Cloud Variables)
+                    localStorage.setItem("highscore", highscore);
                 }
 
-                // Immediately hide and move it (optional, makes it feel responsive)
                 cat.style.display = "none";
             }
         }
 
-        // Scratch Blocks: The massive 'repeat' stacks moving to random positions
+        // Movement Loop
         function catMovementLoop(waitTime) {
             if (gameState !== "On") return;
 
-            // Scratch Block: hide
             cat.style.display = "none";
 
-            // Scratch Block: wait 5.5 seconds (shortened here for gameplay flow, adjust as needed)
             setTimeout(() => {
                 if (gameState !== "On") return;
 
-                // Scratch Block: go to random position
-                // We use Math.random() to pick a random percentage for X and Y
-                const randomX = Math.floor(Math.random() * 85); // 0 to 85% width
-                const randomY = Math.floor(Math.random() * 85); // 0 to 85% height
+                const randomX = Math.floor(Math.random() * 80);
+                const randomY = Math.floor(Math.random() * 80);
                 
                 cat.style.left = randomX + "vw";
                 cat.style.top = randomY + "vh";
-
-                // Scratch Block: show
                 cat.style.display = "block";
 
-                // Scratch Block: wait [waitTime] seconds, then repeat with a slightly faster time
-                // This mimics your blocks where wait goes 1.5 -> 1.4 -> 1.3
-                let nextWaitTime = waitTime - 100; // Decreases by 0.1s
-                if (nextWaitTime < 500) nextWaitTime = 500; // Cap the max speed at 0.5s
+                let nextWaitTime = waitTime - 100;
+                if (nextWaitTime < 500) nextWaitTime = 500;
 
-                currentTimeout = setTimeout(() => {
+                setTimeout(() => {
                     catMovementLoop(nextWaitTime);
                 }, waitTime);
 
-            }, 1000); // Time it stays hidden before jumping
+            }, 1000);
         }
     </script>
 </body>
